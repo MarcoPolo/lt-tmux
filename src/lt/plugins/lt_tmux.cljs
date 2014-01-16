@@ -1,4 +1,4 @@
-(ns lt.plugins.tmux
+(ns lt.plugins.lt-tmux
   (:require [lt.objs.editor :as editor]
             [lt.objs.editor.pool :as pool]
             [lt.objs.console :as console]
@@ -95,9 +95,6 @@
 
 (def lt-tmux (object/create ::lt-tmux))
 
-(object/raise (pool/last-active) :editor.result "stay classy" {:line 42 :start-line 42})
-
-
 (cmd/command {:command ::send-selected-text-to-tmux
               :desc "Send selected text to tmux"
               :exec (fn []
@@ -107,7 +104,3 @@
               :desc "Change the current session id"
               :exec (fn []
                       (object/raise lt-tmux ::prompt-session-identifier nil))})
-
-(comment
-  (get-in @lt-tmux [:content :session-id] ":")
-  )
