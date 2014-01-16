@@ -1,0 +1,2 @@
+{:+ {:app [(:lt.objs.plugins/load-js "lt-tmux_compiled.js" true)]
+     :editor []}}

@@ -1,2 +1,0 @@
-{:+ {:app [(:lt.objs.plugins/load-js "declassifier_compiled.js" true)]
-     :editor [(:lt.objs.editor/on-change :declassify-behind-cursor)]}}

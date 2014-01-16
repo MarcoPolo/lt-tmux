@@ -1,5 +1,5 @@
-{:name "Declassifier"
- :author "Jamie Brandon"
- :source "https://github.com/LightTable/LightTable-Declassifier"
- :desc "Remove all traces of class on the fly"
- :behaviors "declassifier.behaviors"}
+{:name "lt-tmux"
+ :author "Marco Munizaga"
+ :source "https://github.com/marcopolo/lt-tmux"
+ :desc "Send arbitrary code to a tmux session"
+ :behaviors "lt_tmux.behaviors"}
