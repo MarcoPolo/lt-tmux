@@ -14,7 +14,9 @@ For maximum awesome, consider adding the following to your user keymap:
 
 Which will give you an eval ability inside shell files.
 
-You can essentially eval anything that has a REPL/interpreter on the commandline: sql, matlab, etc...
+### Why stop there?
+
+You can essentially eval anything that has a REPL/interpreter on the command line: sql, matlab, etc...
 
 # Configuration
 
