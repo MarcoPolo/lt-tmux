@@ -61,11 +61,24 @@
           :reaction (fn [this data]
                       (letfn [(read-input [popup] (dom/val (dom/$ :input (:content popup))))]
                         (def k-test this)
-                        (let [popup (popup/popup! {:header "how you doing?"
+                        (let [popup (popup/popup! {:header "Specify your tmux session identifier"
                                                     :body [:span
-                                                           [:p "looking good!"]
+                                                           [:p
+                                                            "for example: mysession:mywindow.1.  If the pane index is omitted,
+                                                             the currently active pane in the specified window is used.  If neither a colon nor period
+                                                             appears, tmux first attempts to use the argument as a pane index; if that
+                                                             fails, it is looked up as for target-window.  A `+' or `-' indicate the
+                                                             next or previous pane index, respectively.  One of the strings top,
+                                                             bottom, left, right, top-left, top-right, bottom-left or bottom-right may
+                                                             be used instead of a pane index."]
+
+                                                           [:p "The special characters `+' and `-' may be followed by an offset, for
+                                                           example:
+
+                                                                 select-window -t:+2"]
+                                                           [:p "If you aren't sure just put a colon, :"]
                                                            (input this)]
-                                                    :buttons [{:label "thanks!"}]})
+                                                    :buttons [{:label "Done"}]})
                               input (dom/$ :input (object/->content popup))]
                           (dom/focus input)
                           (.select input)))))
