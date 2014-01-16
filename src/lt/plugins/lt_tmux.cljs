@@ -2,13 +2,13 @@
   (:require [lt.objs.editor :as editor]
             [lt.objs.editor.pool :as pool]
             [lt.objs.console :as console]
-            [lt.object :as object]
             [lt.objs.proc :as proc]
             [lt.objs.popup :as popup]
             [lt.object :as object]
             [lt.util.dom :as dom]
+            [lt.util.js :refer [wait]]
             [lt.objs.command :as cmd])
-  (:require-macros [lt.macros :refer [behavior]]))
+  (:require-macros [lt.macros :refer [behavior defui]]))
 
 (defn read-selected []
   (let [cm (editor/->cm-ed (pool/last-active))
@@ -32,85 +32,69 @@
   ([obj]
    (paste-tmux-buffer obj ":")))
 
-(behavior ::inline-result
-          :triggers #{::show-inline}
-          :reaction (fn [editor res]
-                      (let [start #js {:line 48 :ch 0}
-                            end  #js {:line 48 :ch 18}]
-                        (object/raise editor :editor.result (:result res) {:line end
-                                                                           :start-line start}))
-                      (console/log "Triggered this behavior" editor res)))
-
 (behavior ::on-out
            :triggers #{:proc.out}
            :reaction (fn [this data]
-                       (console/log "hey we got something")
-                       (console/log data)
-                       (console/log this)))
+                       (console/log data)))
 
 (behavior ::send-to-tmux
           :triggers #{::send-to-tmux}
           :reaction (fn [this data]
                       (let [{:keys [obj text]} data]
-                        (console/log (str "I'm going to send " text " to tmux"))
                         (set-tmux-buffer! obj text)
-                        (paste-tmux-buffer! obj))))
+                        (paste-tmux-buffer! obj (get-in @this [:content :session-id] ":")))))
+
+(behavior ::change-session-id
+          :triggers #{:change!}
+          :reaction (fn [this session-id]
+                      (swap! this assoc-in [:content :session-id] session-id)))
+
+(defui input [this]
+  [:input {:type :text :placeholder (get-in @this [:content :session-id] ":")}]
+  :keyup (fn [e]
+           (this-as me
+                    (object/raise this :change! (dom/val me)))))
+
+
+(behavior ::prompt-user-for-session-identifier
+          :triggers #{::prompt-session-identifier}
+          :reaction (fn [this data]
+                      (letfn [(read-input [popup] (dom/val (dom/$ :input (:content popup))))]
+                        (def k-test this)
+                        (let [popup (popup/popup! {:header "how you doing?"
+                                                    :body [:span
+                                                           [:p "looking good!"]
+                                                           (input this)]
+                                                    :buttons [{:label "thanks!"}]})
+                              input (dom/$ :input (object/->content popup))]
+                          (dom/focus input)
+                          (.select input)))))
+
+(behavior ::check-if-nil-session-id
+         :triggers #{::send-to-tmux}
+         :reaction (fn [this data]
+                     (when-not (get-in @this [:content :session-id])
+                       (object/raise this ::prompt-user-for-session-identifier nil))))
 
 (object/object* ::lt-tmux
                 :triggers []
-                :behaviors [::inline-result ::on-out ::send-to-tmux])
+                :behaviors [::on-out ::send-to-tmux ::prompt-user-for-session-identifier ::check-if-nil-session-id ::change-session-id])
 
 (def lt-tmux (object/create ::lt-tmux))
 
 (object/raise (pool/last-active) :editor.result "stay classy" {:line 42 :start-line 42})
 
 
-(cmd/command {:command ::print-line-text
-              :desc "Prints the current line to the console"
-              :exec #(console/log (read-selected))})
-
-(cmd/command {:command ::trigger-inline
-              :desc "triggers lt-tmux inline"
-              :exec (fn []
-                      (object/raise lt-tmux ::show-inline {:result "stay classy"}) )})
-
 (cmd/command {:command ::send-selected-text-to-tmux
               :desc "Send selected text to tmux"
               :exec (fn []
                       (object/raise lt-tmux ::send-to-tmux {:text (read-selected)
                                                             :obj lt-tmux}))})
-
-(defn prompt-for-session-identifier!
-  "Prompts the user for an alternate session session identifer"
-  [obj]
-  )
+(cmd/command {:command ::reset-session-id
+              :desc "Change the current session id"
+              :exec (fn []
+                      (object/raise lt-tmux ::prompt-session-identifier nil))})
 
 (comment
-
-  (proc/exec {:command "tmux"
-              :args ["set-buffer" "pwd\n"]
-              :obj tslime})
-
-  (proc/exec {:command "tmux"
-              :args ["paste-buffer" "-t" ":"]
-              :obj tslime})
-
-  (set-tmux-buffer! lt-tmux "pwd")
-  (paste-tmux-buffer! lt-tmux)
-
-  pwd
-  ls
-
-  (= "\n" (last "pwd\n"))
-
-  (def popup
-    @(popup/popup! {:header "how you doing?"
-                    :body [:span
-                           [:p "looking good!"]
-                           [:input {:type :text :placeholder ":"}]]
-                    :buttons [{:label "thanks!"}]}))
-
-    (dom/val (dom/$ :input (:content popup)))
-  popup
-
+  (get-in @lt-tmux [:content :session-id] ":")
   )
